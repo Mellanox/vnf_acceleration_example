@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright 2017 Mellanox Technologies, Ltd
 
-APP = rss_example
+APP = vnf_example
 
 SRCS-y := rss_example.c
+SRCS-y += decap_example.c
 
 # Build using pkg-config variables if possible
 ifeq ($(shell pkg-config --exists libdpdk && echo 0),0)
