@@ -71,74 +71,68 @@ static struct rte_flow_item pattern[] = {
 		.last = NULL },
 };
 
-/* Decap GTP-U type traffic and do RSS based on the inner IPv4 src. */
+/* Encap GTP-U type traffic. */
 struct rte_flow *
-create_gtp_u_decap_rss_flow(uint16_t port, uint32_t nb_queues,
-			    uint16_t *queues)
+create_gtp_u_encap_flow(uint16_t port)
 {
 	struct rte_flow *flow;
 	struct rte_flow_error error;
 	struct rte_flow_attr attr = { /* Holds the flow attributes. */
 				.group = 0, /* set the rule on the main group. */
-				.ingress = 1, };/* Rx flow. */
-	struct rte_flow_item_gtp gtp_spec = {
+				.egress = 1, };/* Tx flow. */
+	/* Create the items that will be needed for the encap. */
+	struct rte_flow_item_gtp gtp = {
 			.teid = rte_cpu_to_be_32(1234), /* Set the teid */
 			.msg_type = 255 , /* The expected value. */
 			.v_pt_rsv_flags = 2}; /*set sequence number flag*/
-	struct rte_flow_item_gtp gtp_mask = {
-			.teid = RTE_BE32(0xffffffff),/* Set teid mask*/
-			.msg_type = 0xff , /* match on message type.*/
-			.v_pt_rsv_flags = 0x07}; /*Set flags mask*/
-			/*mask bit equal to 1 means match on this bit. */
-	struct rte_flow_action_rss rss = {
-			.level = 0, /* Since the RSS will be done after decap
-			which mean there will be only outer layer. */
-			.queue = queues, /* Set the selected target queues. */
-			.queue_num = nb_queues, /* The number of queues. */
-			.types =  ETH_RSS_IP | ETH_RSS_L3_SRC_ONLY };
-	/* Create the items that will be needed for the decap. */
+			/**
+			* Version (3b), protocol type (1b), reserved (1b),
+			* Extension header flag (1b),
+			* Sequence number flag (1b),
+			* N-PDU number flag (1b).
+			*/
 	struct rte_flow_item_eth eth = {
 			.type = RTE_BE16(RTE_ETHER_TYPE_IPV4),
 			.dst.addr_bytes = "\x01\x02\x03\x04\x05\x06",
 			.src.addr_bytes = "\x06\x05\x04\x03\x02\01" };
 	struct rte_flow_item_ipv4 ipv4 = {
 			.hdr = {
+				.version_ihl = 0x45,
+				.src_addr = rte_cpu_to_be_32(0x0C0C0C0C),
+				/* Set src address 12.12.12.12 */
+				.dst_addr = rte_cpu_to_be_32(0x0D0D0D0D),
+				/* Set dst address 13.13.13.13 */
 				.next_proto_id = IPPROTO_UDP }};
 	struct rte_flow_item_udp udp = {
 			.hdr = {
 				.dst_port = rte_cpu_to_be_16(2152) }};
-				/* Match on UDP dest port 2152 (GTP-U) */
-	struct rte_flow_item_gtp gtp;
-	struct rte_flow_item_ipv4 ipv4_inner = {
+				/* Set dst port of GTP-U */
+	/* Create the items that will be needed for the matching. */
+	struct rte_flow_item_ipv4 ipv4_spec = {
 			.hdr = {
 				.src_addr = rte_cpu_to_be_32(0x0A0A0A0A),
-				/* Match on 10.10.10.10 src address */
+				/* Match src address 10.10.10.10 */
+				.dst_addr = rte_cpu_to_be_32(0x0B0B0B0B),
+				/* Match dst address 11.11.11.11 */
 				.next_proto_id = IPPROTO_UDP }};
 	struct rte_flow_item_ipv4 ipv4_mask = {
 			.hdr = {
-				.src_addr = RTE_BE32(0xffffffff)}};
-	struct rte_flow_item_udp udp_inner = {
+				.src_addr = RTE_BE32(0xffffffff),
+				.dst_addr = RTE_BE32(0xffffffff)}};
+	struct rte_flow_item_udp udp_spec = {
 			.hdr = {
 				.dst_port = rte_cpu_to_be_16(4000) }};
-				/* Match on udp dest port 4000 */
 	struct rte_flow_item_udp udp_mask = {
 			.hdr = {
 				.dst_port = RTE_BE16(0xffff) }};
-
-	struct rte_flow_action_set_ipv4 set_ipv4 = {
-			.ipv4_addr = rte_cpu_to_be_32(0x0E0E0E0E)};
-			/* Set the inner IP src address to 14.14.14.14 */
-
-	size_t decap_size = sizeof(eth) + sizeof(ipv4) + sizeof(udp) +
-			sizeof(gtp);
-	size_t encap_size = sizeof(eth);
+;
+	size_t encap_size = sizeof(eth) + sizeof(ipv4) + sizeof(udp) +
+				sizeof(gtp);
+	size_t decap_size = sizeof(eth);
 	uint8_t decap_buf[decap_size];
 	uint8_t encap_buf[encap_size];
 	uint8_t *bptr; /* Used to copy the headers to the buffer. */
-	/* Since GTP is L3 tunnel type (no inner L2) it means that we need to
-	 * first decap the outer header, and secondly encap the
-	 * remaining packet with ETH header.
-	 */
+
 	struct rte_flow_action_raw_decap decap = {
 			.size = decap_size ,
 			.data = decap_buf };
@@ -146,48 +140,35 @@ create_gtp_u_decap_rss_flow(uint16_t port, uint32_t nb_queues,
 			.size = encap_size ,
 			.data = encap_buf };
 	struct rte_flow_action actions[] = {
-			[0] = { /*Decap the outer part beginning from the
-			 outermost L2 up to including the tunnel item. */
+			[0] = { /*Decap L2 of the packet. */
 				.type = RTE_FLOW_ACTION_TYPE_RAW_DECAP,
 				.conf = &decap },
-			[1] = { /* Encap the packet with the missing L2. */
+			[1] = { /* Encap the packet with all layers. */
 				.type = RTE_FLOW_ACTION_TYPE_RAW_ENCAP,
 				.conf = &encap },
-			[2] = { /* Change the inner ipv4 src address. */
-				.type = RTE_FLOW_ACTION_TYPE_SET_IPV4_SRC,
-				.conf = &set_ipv4 },
-			[3] = { /* The RSS action to be used. */
-				.type = RTE_FLOW_ACTION_TYPE_RSS,
-				.conf = &rss },
-			[4] = { /* End action must be the last action. */
+			[2] = { /* End action must be the last action. */
 				.type = RTE_FLOW_ACTION_TYPE_END,
 				.conf = NULL }
 			};
 
-	/* Configure matching on outer IPv4 UDP and GTP-U.
-	 * This case we don't care about specific outer values we just 
-	 * serach for any header that maches eth / ipv4 / udp / gtp type 255 /
-	 * ipv4 src addr is 10.10.10.10/ udp proto is 4000.
-	 * The RSS will only be done on the inner ipv4 src file, in order to 
-	 * make sure that all of the packets from a given user (inner source
-	 * ip) will be routed to the same core.
+	/* Configure matching on IPv4 and UDP.
+	 * search for any header that matches eth /
+	 * ipv4 src addr is 10.10.10.10 dst addr is 11.11.11.11 /
+	 *  udp proto is 4000.
 	 */
 	pattern[L2].type = RTE_FLOW_ITEM_TYPE_ETH;
 	pattern[L3].type = RTE_FLOW_ITEM_TYPE_IPV4;
+	pattern[L3].spec = &ipv4_spec;
+	pattern[L3].mask = &ipv4_mask;
 	pattern[L4].type = RTE_FLOW_ITEM_TYPE_UDP;
-	pattern[TUNNEL].type = RTE_FLOW_ITEM_TYPE_GTP;
-	pattern[TUNNEL].spec = &gtp_spec;
-	pattern[TUNNEL].mask = &gtp_mask;
-	pattern[L3_INNER].type = RTE_FLOW_ITEM_TYPE_IPV4;
-	pattern[L3_INNER].spec = &ipv4_inner;
-	pattern[L3_INNER].mask = &ipv4_mask;
-	pattern[L4_INNER].type = RTE_FLOW_ITEM_TYPE_UDP;
-	pattern[L4_INNER].spec = &udp_inner;
-	pattern[L4_INNER].mask = &udp_mask;
+	pattern[L4].spec = &udp_spec;
+	pattern[L4].mask = &udp_mask;
 
-	/* Configure the buffer for the decap action.
-	   The important part is the size of the buffer*/
+	/* Configure the buffer for the decap action. needs to remove L2. */
 	bptr = decap_buf;
+	memcpy(bptr, &eth, sizeof(eth));
+	/* Configure the buffer for the encap action.*/
+	bptr = encap_buf;
 	memcpy(bptr, &eth, sizeof(eth));
 	bptr += sizeof(eth);
 	memcpy(bptr, &ipv4, sizeof(ipv4));
@@ -195,15 +176,12 @@ create_gtp_u_decap_rss_flow(uint16_t port, uint32_t nb_queues,
 	memcpy(bptr, &udp, sizeof(udp));
 	bptr += sizeof(udp);
 	memcpy(bptr, &gtp, sizeof(gtp));
-	bptr += sizeof(gtp);
-	/* Configure the buffer for the encap action. needs to add L2. */
-	bptr = encap_buf;
-	memcpy(bptr, &eth, sizeof(eth));
+
 
 	/* Create the flow. */
 	flow = rte_flow_create(port, &attr, pattern, actions, &error);
 	if (!flow)
-		printf("Can't create decap flow. %s\n", error.message);
-	
+		printf("Can't create encap flow. %s\n", error.message);
+
 	return flow;
 }

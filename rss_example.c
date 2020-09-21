@@ -72,13 +72,13 @@ struct rte_flow_item pattern[] = {
 };
 
 /* Create RSS on inner source IP. */
-static struct rte_flow *
+struct rte_flow *
 create_gtp_u_inner_ip_rss_flow(uint16_t port, uint32_t nb_queues,
 			       uint16_t *queues)
 {
 	struct rte_flow *flow;
 	struct rte_flow_error error;
-	__rte_unused struct rte_flow_attr attr = { /* Holds the flow attributes. */
+	struct rte_flow_attr attr = { /* Holds the flow attributes. */
 				.group = 0, /* set the rule on the main group. */
 				.ingress = 1, };/* Rx flow. */
 	struct rte_flow_item_gtp gtp_spec = {
@@ -108,6 +108,7 @@ create_gtp_u_inner_ip_rss_flow(uint16_t port, uint32_t nb_queues,
 	 * make sure that all of the packets from a given user (inner source
 	 * ip) will be routed to the same core.
 	 */
+	pattern[L2].type = RTE_FLOW_ITEM_TYPE_ETH;
 	pattern[L3].type = RTE_FLOW_ITEM_TYPE_IPV4;
 	pattern[L4].type = RTE_FLOW_ITEM_TYPE_UDP;
 	pattern[TUNNEL].type = RTE_FLOW_ITEM_TYPE_GTP;
@@ -125,12 +126,3 @@ create_gtp_u_inner_ip_rss_flow(uint16_t port, uint32_t nb_queues,
 }
 
 
-int
-main(__rte_unused int argc, __rte_unused char **argv)
-{
-	uint32_t nb_queues = 4;
-	uint16_t queues[] = {0, 1, 2, 3};
-	create_gtp_u_inner_ip_rss_flow(0, nb_queues, queues);
-	create_gtp_u_decap_rss_flow(0, nb_queues, queues);
-	return 0;
-}

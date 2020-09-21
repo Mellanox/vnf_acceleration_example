@@ -3,8 +3,8 @@
 
 APP = vnf_example
 
-SRCS-y := rss_example.c
-SRCS-y += decap_example.c
+# SRCS-y := main.c decap_example.c
+SRCS-y := main.c rss_example.c decap_example.c encap_example.c
 
 # Build using pkg-config variables if possible
 ifeq ($(shell pkg-config --exists libdpdk && echo 0),0)
