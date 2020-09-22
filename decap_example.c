@@ -80,7 +80,10 @@ create_gtp_u_decap_rss_flow(uint16_t port, uint32_t nb_queues,
 	struct rte_flow_error error;
 	struct rte_flow_attr attr = { /* Holds the flow attributes. */
 				.group = 0, /* set the rule on the main group. */
-				.ingress = 1, };/* Rx flow. */
+				.ingress = 1,/* Rx flow. */
+				.priority = 0, }; /* add priority to rule
+				to give the Decap rule higher priority since
+				it is more specific than RSS */
 	struct rte_flow_item_gtp gtp_spec = {
 			.teid = rte_cpu_to_be_32(1234), /* Set the teid */
 			.msg_type = 255 , /* The expected value. */
