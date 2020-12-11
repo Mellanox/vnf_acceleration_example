@@ -43,6 +43,27 @@ Two functions are implemented which sync flows in NIC TX domain and all
 domain.
 If fail, the application will quit with error.
 
+Hairpin example:
+
+The hairpin example will setup one haipin queue. And according to the ports
+used: one or two, different hairpin setup will be used:
+1. one port hairpin;
+2. two port hairpin;
+
+For one port hairpin, mode .manual_bind = 0 & .tx_explicit = 0 is used which
+means PMD will bind haripin queues automaticly and implicitly create Tx flow.
+The application only insert one ingress flow which match on:
+eth / ipv4 src is 10.10.10.10 / tcp
+with actions:
+queue index <hairpin queue> / raw_decap / raw_encap
+The packet is directed to hairpin queue and on Tx direction the L2 is decaped
+with GTP-U header.
+
+Fow two ports hairpin, mode .manual_bind = 1 & .tx_explicit = 1 is the only
+mode can be supported today.
+The application, then, manually call hairpin bind API and create Tx flow
+explicitly to decap L2 with GTP-U header as it did in one port hairpin.
+
 How to run the Application:
 
 Clone the Mellanox DPDK from:  

@@ -34,10 +34,11 @@
 static volatile bool force_quit;
 
 static uint16_t port_id;
-static uint32_t nr_queues = 4;
+static uint32_t nr_std_queues = 4;
 static uint16_t queues[] = {0, 1, 2, 3};
 struct rte_mempool *mbuf_pool;
 struct rte_flow *flow;
+static uint16_t nr_hairpin_queues = 1;
 
 #define SRC_IP ((0<<24) + (0<<16) + (0<<8) + 0) /* src ip = 0.0.0.0 */
 #define DEST_IP ((192<<24) + (168<<16) + (1<<8) + 1) /* dest ip = 192.168.1.1 */
@@ -65,7 +66,7 @@ main_loop(void)
 	uint16_t j;
 
 	while (!force_quit) {
-		for (i = 0; i < nr_queues; i++) {
+		for (i = 0; i < nr_std_queues; i++) {
 			nb_rx = rte_eth_rx_burst(port_id,
 						i, mbufs, 32);
 			if (nb_rx) {
@@ -82,7 +83,8 @@ main_loop(void)
 							(unsigned int)i);
 					printf("\n");
 				}
-				nb_tx = rte_eth_tx_burst(port_id, i, mbufs, 32);
+				nb_tx = rte_eth_tx_burst(port_id, i, mbufs,
+						nb_rx);
 			}
 			/* Free any unsent packets. */
 			if (unlikely(nb_tx < nb_rx)) {
@@ -94,9 +96,16 @@ main_loop(void)
 	}
 
 	/* closing and releasing resources */
-	rte_flow_flush(port_id, &error);
-	rte_eth_dev_stop(port_id);
-	rte_eth_dev_close(port_id);
+	RTE_ETH_FOREACH_DEV(port_id) {
+		rte_flow_flush(port_id, &error);
+	}
+	if ( 2 == rte_eth_dev_count_avail())
+		hairpin_two_ports_unbind();
+
+	RTE_ETH_FOREACH_DEV(port_id) {
+		rte_eth_dev_stop(port_id);
+		rte_eth_dev_close(port_id);
+	}
 }
 
 #define CHECK_INTERVAL 1000  /* 100ms */
@@ -125,7 +134,7 @@ assert_link_status(void)
 }
 
 static void
-init_port(void)
+init_port(uint16_t port_id)
 {
 	int ret;
 	uint16_t i;
@@ -156,7 +165,8 @@ init_port(void)
 	port_conf.txmode.offloads &= dev_info.tx_offload_capa;
 	printf(":: initializing port: %d\n", port_id);
 	ret = rte_eth_dev_configure(port_id,
-				nr_queues, nr_queues, &port_conf);
+				nr_std_queues + nr_hairpin_queues,
+				nr_std_queues + nr_hairpin_queues, &port_conf);
 	if (ret < 0) {
 		rte_exit(EXIT_FAILURE,
 			":: cannot configure device: err=%d, port=%u\n",
@@ -165,7 +175,7 @@ init_port(void)
 
 	rxq_conf = dev_info.default_rxconf;
 	rxq_conf.offloads = port_conf.rxmode.offloads;
-	for (i = 0; i < nr_queues; i++) {
+	for (i = 0; i < nr_std_queues; i++) {
 		ret = rte_eth_rx_queue_setup(port_id, i, 512,
 				     rte_eth_dev_socket_id(port_id),
 				     &rxq_conf,
@@ -180,7 +190,7 @@ init_port(void)
 	txq_conf = dev_info.default_txconf;
 	txq_conf.offloads = port_conf.txmode.offloads;
 
-	for (i = 0; i < nr_queues; i++) {
+	for (i = 0; i < nr_std_queues; i++) {
 		ret = rte_eth_tx_queue_setup(port_id, i, 512,
 				rte_eth_dev_socket_id(port_id),
 				&txq_conf);
@@ -197,16 +207,37 @@ init_port(void)
 			":: promiscuous mode enable failed: err=%s, port=%u\n",
 			rte_strerror(-ret), port_id);
 
-	ret = rte_eth_dev_start(port_id);
-	if (ret < 0) {
-		rte_exit(EXIT_FAILURE,
-			"rte_eth_dev_start:err=%d, port=%u\n",
-			ret, port_id);
-	}
 
-	assert_link_status();
 
 	printf(":: initializing port: %d done\n", port_id);
+}
+
+static void
+init_ports(void)
+{
+	uint16_t port_id;
+
+	RTE_ETH_FOREACH_DEV(port_id) {
+		init_port(port_id);
+	}
+}
+
+static void
+start_ports(void)
+{
+	uint16_t port_id;
+	int ret;
+
+	RTE_ETH_FOREACH_DEV(port_id) {
+		ret = rte_eth_dev_start(port_id);
+		if (ret < 0) {
+			rte_exit(EXIT_FAILURE,
+				"rte_eth_dev_start:err=%d, port=%u\n",
+				ret, port_id);
+		}
+		assert_link_status();
+	}
+
 }
 
 static void
@@ -238,9 +269,9 @@ main(int argc, char **argv)
 	if (nr_ports == 0)
 		rte_exit(EXIT_FAILURE, ":: no Ethernet ports found\n");
 	port_id = 0;
-	if (nr_ports != 1) {
-		printf(":: warn: %d ports detected, but we use only one: port %u\n",
-			nr_ports, port_id);
+	if (nr_ports != 1 && nr_ports != 2) {
+		printf(":: warn: %d ports detected, but we use two ports at max\n",
+			nr_ports);
 	}
 	mbuf_pool = rte_pktmbuf_pool_create("mbuf_pool", 4096, 128, 0,
 					    RTE_MBUF_DEFAULT_BUF_SIZE,
@@ -248,18 +279,45 @@ main(int argc, char **argv)
 	if (mbuf_pool == NULL)
 		rte_exit(EXIT_FAILURE, "Cannot init mbuf pool\n");
 
-	init_port();
-
+	init_ports();
+	printf(":: %u ports active, setup %u ports hairpin...",
+			nr_ports, nr_ports);
+	if (nr_ports == 2)
+		hairpin_two_ports_setup(nr_hairpin_queues);
+	else
+		hairpin_one_port_setup(port_id, nr_hairpin_queues);
+	printf("done\n");
+	start_ports();
+	printf(":: %u ports hairpin bind...", nr_ports);
+	if (nr_ports == 2) {
+		ret = hairpin_two_ports_bind();
+		if (ret)
+			rte_exit(EXIT_FAILURE, "Cannot bind two hairpin ports");
+	}
+	printf("done\n");
+	port_id = rte_eth_find_next(0);
+	printf(":: warning: only use first port: %u\n", port_id);
 	/* create flow for send packet with */
-	flow = create_gtp_u_decap_rss_flow(port_id, nr_queues,
+	flow = create_gtp_u_decap_rss_flow(port_id, nr_std_queues,
 				    queues);
-	flow = create_gtp_u_inner_ip_rss_flow(port_id, nr_queues,
+	flow = create_gtp_u_inner_ip_rss_flow(port_id, nr_std_queues,
 				    queues);
 	flow = create_gtp_u_encap_flow(port_id);
 	if (!flow) {
 		printf("Flow can't be created \n");
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
+	printf(":: create hairpin flows...");
+	if (nr_ports == 2)
+		flow = hairpin_two_ports_flows_create();
+	else
+		flow = hairpin_one_port_flows_create();
+
+	if (!flow) {
+		printf("Hairpin flows can't be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
 	ret = sync_all_flows(port_id);
 	if (ret) {
 		printf("Failed to sync flows, flows may not take effect!\n");
