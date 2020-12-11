@@ -4,7 +4,8 @@
 APP = vnf_example
 
 # SRCS-y := main.c decap_example.c
-SRCS-y := main.c rss_example.c decap_example.c encap_example.c
+SRCS-y := main.c rss_example.c decap_example.c encap_example.c \
+	sync_flow_example.c
 
 # Build using pkg-config variables if possible
 ifeq ($(shell pkg-config --exists libdpdk && echo 0),0)
@@ -20,8 +21,12 @@ PKGCONF ?= pkg-config
 
 PC_FILE := $(shell $(PKGCONF) --path libdpdk 2>/dev/null)
 CFLAGS += -O3 $(shell $(PKGCONF) --cflags libdpdk)
+# Add flag to allow experimental API as we use rte_pmd_mlx5_sync_flow API
+CFLAGS += -DALLOW_EXPERIMENTAL_API
 LDFLAGS_SHARED = $(shell $(PKGCONF) --libs libdpdk)
+LDFLAGS_SHARED += -lrte_net_mlx5
 LDFLAGS_STATIC = $(shell $(PKGCONF) --static --libs libdpdk)
+LDFLAGS_STATIC += -l:rte_net_mlx5.a
 
 build/$(APP)-shared: $(SRCS-y) Makefile $(PC_FILE) | build
 	$(CC) $(CFLAGS) $(SRCS-y) -o $@ $(LDFLAGS) $(LDFLAGS_SHARED)

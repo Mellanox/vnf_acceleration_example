@@ -260,6 +260,11 @@ main(int argc, char **argv)
 		printf("Flow can't be created \n");
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
+	ret = sync_all_flows(port_id);
+	if (ret) {
+		printf("Failed to sync flows, flows may not take effect!\n");
+		rte_exit(EXIT_FAILURE, "error to sync flows");
+	}
 
 	main_loop();
 
