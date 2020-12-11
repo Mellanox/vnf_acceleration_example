@@ -23,4 +23,21 @@ sync_nic_tx_flows(uint16_t port);
 int
 sync_all_flows(uint16_t port);
 
+int
+hairpin_one_port_setup(uint16_t port, uint64_t nr_hairpin_queue);
+
+int
+hairpin_two_ports_setup(uint16_t nr_hairpin_queues);
+
+int
+hairpin_two_ports_bind();
+
+int
+hairpin_two_ports_unbind();
+
+struct rte_flow *
+hairpin_two_ports_flows_create(void);
+
+struct rte_flow *
+hairpin_one_port_flows_create(void);
 #endif
