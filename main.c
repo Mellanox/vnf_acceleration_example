@@ -68,8 +68,6 @@ main_loop(void)
 		for (i = 0; i < nr_queues; i++) {
 			nb_rx = rte_eth_rx_burst(port_id,
 						i, mbufs, 32);
-			nb_tx = rte_eth_tx_burst(port_id,
-						i, mbufs, 32);
 			if (nb_rx) {
 				for (j = 0; j < nb_rx; j++) {
 					struct rte_mbuf *m = mbufs[j];
@@ -83,9 +81,8 @@ main_loop(void)
 					printf(" - queue=0x%x",
 							(unsigned int)i);
 					printf("\n");
-
-					rte_pktmbuf_free(m);
 				}
+				nb_tx = rte_eth_tx_burst(port_id, i, mbufs, 32);
 			}
 			/* Free any unsent packets. */
 			if (unlikely(nb_tx < nb_rx)) {
