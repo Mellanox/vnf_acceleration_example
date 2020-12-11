@@ -4,6 +4,7 @@
 #ifndef RTE_VNF_EXAMPLES_H_
 #define RTE_VNF_EXAMPLES_H_
 
+#include <stdint.h>
 
 struct rte_flow *
 create_gtp_u_decap_rss_flow(uint16_t port, uint32_t nb_queues,
@@ -15,4 +16,11 @@ create_gtp_u_inner_ip_rss_flow(uint16_t port, uint32_t nb_queues,
 
 struct rte_flow *
 create_gtp_u_encap_flow(uint16_t port);
+
+int
+sync_nic_tx_flows(uint16_t port);
+
+int
+sync_all_flows(uint16_t port);
+
 #endif

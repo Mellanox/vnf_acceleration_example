@@ -37,6 +37,12 @@ The RSS example matches on the following header:
 eth / ipv4 / udp / gtp type 255 /  ipv4 / udp
 then RSS is performed on the packet based on L3 src only.
 
+Sync flow example:
+
+Two functions are implemented which sync flows in NIC TX domain and all
+domain.
+If fail, the application will quit with error.
+
 How to run the Application:
 
 Clone the Mellanox DPDK from:  
