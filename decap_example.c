@@ -100,10 +100,10 @@ create_gtp_u_decap_rss_flow(uint16_t port, uint32_t nb_queues,
 			.queue_num = nb_queues, /* The number of queues. */
 			.types =  ETH_RSS_IP | ETH_RSS_L3_SRC_ONLY };
 	/* Create the items that will be needed for the decap. */
-	struct rte_flow_item_eth eth = {
-			.type = RTE_BE16(RTE_ETHER_TYPE_IPV4),
-			.dst.addr_bytes = "\x01\x02\x03\x04\x05\x06",
-			.src.addr_bytes = "\x06\x05\x04\x03\x02\01" };
+	struct rte_ether_hdr eth = {
+			.ether_type = RTE_BE16(RTE_ETHER_TYPE_IPV4),
+			.d_addr.addr_bytes = "\x01\x02\x03\x04\x05\x06",
+			.s_addr.addr_bytes = "\x06\x05\x04\x03\x02\01" };
 	struct rte_flow_item_ipv4 ipv4 = {
 			.hdr = {
 				.next_proto_id = IPPROTO_UDP }};
