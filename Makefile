@@ -5,7 +5,7 @@ APP = vnf_example
 
 # SRCS-y := main.c decap_example.c
 SRCS-y := main.c rss_example.c decap_example.c encap_example.c \
-	sync_flow_example.c hairpin_example.c
+	sync_flow_example.c hairpin_example.c flow_tag_example.c
 
 # Build using pkg-config variables if possible
 ifeq ($(shell pkg-config --exists libdpdk && echo 0),0)

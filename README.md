@@ -64,6 +64,14 @@ mode can be supported today.
 The application, then, manually call hairpin bind API and create Tx flow
 explicitly to decap L2 with GTP-U header as it did in one port hairpin.
 
+Flow Tag example:
+
+This example creates two flows: one is on root table, one is on group 1.
+The rule on root table matchs following packet:
+eth / ipv4 / udp / gtp type 255 teid is 0x1200 / ipv4 src is 10.10.10.10 / tcp
+A tag is set on the matched packet and jump to group 1 to do continue actions.
+The rule on group 1 only match on the TAG value and decap GTP header with L2.
+
 How to run the Application:
 
 Clone the Mellanox DPDK from:  

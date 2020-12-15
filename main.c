@@ -318,6 +318,13 @@ main(int argc, char **argv)
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
 	printf("done\n");
+	printf(":: create flow using tag...");
+	flow = create_flow_with_tag(port_id);
+	if (!flow) {
+		printf("Flow with TAG cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
 	ret = sync_all_flows(port_id);
 	if (ret) {
 		printf("Failed to sync flows, flows may not take effect!\n");

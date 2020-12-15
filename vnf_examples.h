@@ -40,4 +40,7 @@ hairpin_two_ports_flows_create(void);
 
 struct rte_flow *
 hairpin_one_port_flows_create(void);
+
+struct rte_flow *
+create_flow_with_tag(uint16_t port);
 #endif
