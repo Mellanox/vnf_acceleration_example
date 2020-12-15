@@ -72,6 +72,17 @@ eth / ipv4 / udp / gtp type 255 teid is 0x1200 / ipv4 src is 10.10.10.10 / tcp
 A tag is set on the matched packet and jump to group 1 to do continue actions.
 The rule on group 1 only match on the TAG value and decap GTP header with L2.
 
+Sampling and Mirror example:
+
+This example has two functions, one creates a flow with 50% sampling rate
+which matchs:
+eth / ipv4 / udp / gtp teid is 1234 type 255 / ipv4 src is 12.10.10.10 / tcp
+the sampled packet has different markid from normal forward packet.
+
+The other creates an FDB rule with mirror in switchdev mode which matchs:
+eth / ipv4 / udp / gtp teid is 1234 type 255 / ipv4 src is 13.10.10.10 / tcp
+This function need to run in switchdev mode (i.e, -a 81:00.0,representor=0).
+
 How to run the Application:
 
 Clone the Mellanox DPDK from:  

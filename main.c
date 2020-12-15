@@ -45,7 +45,6 @@ static uint16_t nr_hairpin_queues = 1;
 #define FULL_MASK 0xffffffff /* full mask */
 #define EMPTY_MASK 0x0 /* empty mask */
 
-
 static inline void
 print_ether_addr(const char *what, struct rte_ether_addr *eth_addr)
 {
@@ -54,11 +53,38 @@ print_ether_addr(const char *what, struct rte_ether_addr *eth_addr)
 	printf("%s%s", what, buf);
 }
 
+static inline void
+dump_pkt_info(struct rte_mbuf *m, uint16_t qi)
+{
+	struct rte_ether_hdr *eth_hdr;
+
+	eth_hdr = rte_pktmbuf_mtod(m, struct rte_ether_hdr *);
+	print_ether_addr("src=", &eth_hdr->s_addr);
+	print_ether_addr(" - dst=", &eth_hdr->d_addr);
+	printf(" - queue=0x%x",(unsigned int)qi);
+	uint64_t ol_flags = m->ol_flags;
+	if (ol_flags & PKT_RX_RSS_HASH) {
+		printf(" - RSS hash=0x%x", (unsigned int) m->hash.rss);
+		printf(" - RSS queue=0x%x", (unsigned int) qi);
+	}
+	if (ol_flags & PKT_RX_FDIR) {
+		printf(" - FDIR matched ");
+		if (ol_flags & PKT_RX_FDIR_ID)
+			printf("ID=0x%x", m->hash.fdir.hi);
+		else if (ol_flags & PKT_RX_FDIR_FLX)
+			printf("flex bytes=0x%08x %08x",
+			       m->hash.fdir.hi, m->hash.fdir.lo);
+		else
+			printf("hash=0x%x ID=0x%x ",
+			       m->hash.fdir.hash, m->hash.fdir.id);
+	}
+	printf("\n");
+}
+
 static void
 main_loop(void)
 {
 	struct rte_mbuf *mbufs[32];
-	struct rte_ether_hdr *eth_hdr;
 	struct rte_flow_error error;
 	uint16_t nb_rx;
 	uint16_t nb_tx;
@@ -73,18 +99,10 @@ main_loop(void)
 				for (j = 0; j < nb_rx; j++) {
 					struct rte_mbuf *m = mbufs[j];
 
-					eth_hdr = rte_pktmbuf_mtod(m,
-							struct rte_ether_hdr *);
-					print_ether_addr("src=",
-							&eth_hdr->s_addr);
-					print_ether_addr(" - dst=",
-							&eth_hdr->d_addr);
-					printf(" - queue=0x%x",
-							(unsigned int)i);
-					printf("\n");
+					dump_pkt_info(m, i);
 				}
-				nb_tx = rte_eth_tx_burst(port_id, i, mbufs,
-						nb_rx);
+				nb_tx = rte_eth_tx_burst(port_id, i,
+						mbufs, nb_rx);
 			}
 			/* Free any unsent packets. */
 			if (unlikely(nb_tx < nb_rx)) {
@@ -322,6 +340,13 @@ main(int argc, char **argv)
 	flow = create_flow_with_tag(port_id);
 	if (!flow) {
 		printf("Flow with TAG cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
+	printf(":: create flow with sampling action...");
+	flow = create_flow_with_sampling(port_id);
+	if (!flow) {
+		printf("Flow with sampling cannot be created\n");
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
 	printf("done\n");
