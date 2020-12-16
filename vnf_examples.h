@@ -49,4 +49,7 @@ create_flow_with_sampling(uint16_t port);
 
 struct rte_flow *
 create_flow_with_mirror(uint16_t port, uint16_t mirror2port, uint16_t fwd2port);
+
+int
+create_symmetric_rss_flow(uint16_t port, uint32_t nb_queues, uint16_t *queues);
 #endif
