@@ -96,6 +96,15 @@ By using symmetric RSS key and hash on field IP src and dst fields, the Uplink
 and downlink of the same session should go to the same queue but different
 session will be spreaded on RSS queues.
 
+Meter example:
+
+This example creates one srTCM profile which has cir 1MB, cbs 64KB and
+one shared meter object using the above profile.
+One jump flow is created on root table which matchs on:
+eth / ipv4 / udp / gtp teid is 1234 type 255 / ipv4 src is 13.10.10.10 / tcp
+If packet is matched, tag is set and jump to the next table on group 1 which
+matchs on tag. The meter is attached to this flow.
+
 How to run the Application:
 
 Clone the Mellanox DPDK from:  
