@@ -34,8 +34,8 @@
 static volatile bool force_quit;
 
 static uint16_t port_id;
-static uint32_t nr_std_queues = 4;
-static uint16_t queues[] = {0, 1, 2, 3};
+static uint32_t nr_std_queues = 8;
+static uint16_t queues[] = {1, 3, 2, 4, 5, 7, 0, 6};
 struct rte_mempool *mbuf_pool;
 struct rte_flow *flow;
 static uint16_t nr_hairpin_queues = 1;
@@ -347,6 +347,12 @@ main(int argc, char **argv)
 	flow = create_flow_with_sampling(port_id);
 	if (!flow) {
 		printf("Flow with sampling cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
+	printf(":: create flow with symmetric RSS action...");
+	if (create_symmetric_rss_flow(port_id, nr_std_queues, queues)){
+		printf("Flow with symmetric RSS cannot be created\n");
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
 	printf("done\n");

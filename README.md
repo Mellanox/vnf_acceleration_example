@@ -83,6 +83,19 @@ The other creates an FDB rule with mirror in switchdev mode which matchs:
 eth / ipv4 / udp / gtp teid is 1234 type 255 / ipv4 src is 13.10.10.10 / tcp
 This function need to run in switchdev mode (i.e, -a 81:00.0,representor=0).
 
+Symmetric RSS example:
+
+This example creates one flow for Uplink which matchs on:
+eth / ipv4 / udp / gtp geid is 1234 type 255 / ipv4 src is 2.0.0.1 / tcp
+The inner ipv4 src address is UE's IP.
+
+The other flow is for Downlink which matchs on:
+eth / ipv4 dst is 2.0.0.1 / tcp
+The ipv4 dst address is UE's IP, which is as same as Uplink's src address.
+By using symmetric RSS key and hash on field IP src and dst fields, the Uplink
+and downlink of the same session should go to the same queue but different
+session will be spreaded on RSS queues.
+
 How to run the Application:
 
 Clone the Mellanox DPDK from:  
