@@ -105,6 +105,11 @@ eth / ipv4 / udp / gtp teid is 1234 type 255 / ipv4 src is 13.10.10.10 / tcp
 If packet is matched, tag is set and jump to the next table on group 1 which
 matchs on tag. The meter is attached to this flow.
 
+GTP QFI match example:
+
+This example match on GTP traffice as following:
+eth / ipv4 src is 3.3.1.1 / udp / gtp teid is 1234 v_pt_rsv_flags spec 0x04 v_pt_rsv_flags mask 0x07 mst_type is 255 / gtp_psc qfi is 9 pdu_t is 0x10 / end
+
 How to run the Application:
 
 Clone the Mellanox DPDK from:  

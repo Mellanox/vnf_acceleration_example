@@ -362,6 +362,12 @@ main(int argc, char **argv)
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
 	printf("done\n");
+	printf(":: create flow match on GTP QFI...");
+	if (create_gtp_u_qfi_flow(port_id)) {
+		printf("Flow match on GTP QFI cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
 	ret = sync_all_flows(port_id);
 	if (ret) {
 		printf("Failed to sync flows, flows may not take effect!\n");
