@@ -110,6 +110,23 @@ GTP QFI match example:
 This example match on GTP traffice as following:
 eth / ipv4 src is 3.3.1.1 / udp / gtp teid is 1234 v_pt_rsv_flags spec 0x04 v_pt_rsv_flags mask 0x07 mst_type is 255 / gtp_psc qfi is 9 pdu_t is 0x10 / end
 
+Flow Age example:
+
+This example created three flows with different age timeout value:
+1. eth / ipv4 src is 3.3.2.1 / udp / gtp teid is 1234 msg_type is 255 / 
+   ipv4 src is 2.0.0.1 / tcp / end actions age timeout 10 / mark id 0x201 / 
+   queue index 0 / end
+2. eth / ipv4 src is 3.3.2.1 / udp / gtp teid is 1234 msg_type is 255 / 
+   ipv4 src is 2.0.0.2 / tcp / end actions age timeout 20 / mark id 0x202 / 
+   queue index 0 / end
+3. eth / ipv4 src is 3.3.2.1 / udp / gtp teid is 1234 msg_type is 255 / 
+   ipv4 src is 2.0.0.3 / tcp / end actions age timeout 30 / mark id 0x203 / 
+   queue index 0 / end
+
+And a callback function is registered on device event RTE_ETH_EVENT_FLOW_AGED in
+order to get notification when there are flows aged.
+When this callback is called, it will deleted the corresponding aged flows.
+
 How to run the Application:
 
 Clone the Mellanox DPDK from:  

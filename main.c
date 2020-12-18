@@ -368,6 +368,12 @@ main(int argc, char **argv)
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
 	printf("done\n");
+	printf(":: create flow with age action...");
+	if (create_flow_with_age(port_id)) {
+		printf("Flow with age cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
 	ret = sync_all_flows(port_id);
 	if (ret) {
 		printf("Failed to sync flows, flows may not take effect!\n");
