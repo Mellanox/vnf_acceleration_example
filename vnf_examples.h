@@ -58,4 +58,10 @@ create_flow_with_meter(uint16_t port);
 
 int
 create_gtp_u_qfi_flow(uint16_t port);
+
+int
+create_flow_with_age(uint16_t port);
+
+int
+register_aged_event(uint16_t port);
 #endif
