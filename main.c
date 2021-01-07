@@ -350,6 +350,13 @@ main(int argc, char **argv)
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
 	printf("done\n");
+	printf(":: create flow with sampling action...");
+	flow = create_nic_flow_with_mirror(port_id, 2, 1);
+	if (!flow) {
+		printf("Flow with mirror on NIC RX domain cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
 	printf(":: create flow with symmetric RSS action...");
 	if (create_symmetric_rss_flow(port_id, nr_std_queues, queues)){
 		printf("Flow with symmetric RSS cannot be created\n");
