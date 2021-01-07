@@ -67,4 +67,6 @@ register_aged_event(uint16_t port);
 
 struct rte_flow *
 create_gre_decap_rss_flow(uint16_t port, uint32_t nb_queues, uint16_t *queues);
+
+struct rte_flow *create_gre_encap_flow(uint16_t port);
 #endif
