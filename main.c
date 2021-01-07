@@ -291,7 +291,7 @@ main(int argc, char **argv)
 		printf(":: warn: %d ports detected, but we use two ports at max\n",
 			nr_ports);
 	}
-	mbuf_pool = rte_pktmbuf_pool_create("mbuf_pool", 4096, 128, 0,
+	mbuf_pool = rte_pktmbuf_pool_create("mbuf_pool", 40960, 128, 0,
 					    RTE_MBUF_DEFAULT_BUF_SIZE,
 					    rte_socket_id());
 	if (mbuf_pool == NULL)
