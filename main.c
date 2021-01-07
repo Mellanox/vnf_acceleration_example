@@ -388,6 +388,14 @@ main(int argc, char **argv)
 		rte_exit(EXIT_FAILURE, "error in create flow");
 	}
 	printf("done\n");
+	if (nr_ports == 2) {
+		printf(":: create hairpin flow with meta ..");
+		if (create_hairpin_meta_flow()) {
+			printf("Hairpin flow with meta data cannot be created\n");
+			rte_exit(EXIT_FAILURE, "error in create flow");
+		}
+		printf("done\n");
+	}
 	ret = sync_all_flows(port_id);
 	if (ret) {
 		printf("Failed to sync flows, flows may not take effect!\n");
