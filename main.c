@@ -374,6 +374,13 @@ main(int argc, char **argv)
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
 	printf("done\n");
+	printf(":: create GRE RSS flow ..");
+	flow = create_gre_decap_rss_flow(port_id, nr_std_queues, queues);
+	if (!flow) {
+		printf("GRE RSS decap flows cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
 	ret = sync_all_flows(port_id);
 	if (ret) {
 		printf("Failed to sync flows, flows may not take effect!\n");
