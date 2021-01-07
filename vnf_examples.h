@@ -69,4 +69,6 @@ struct rte_flow *
 create_gre_decap_rss_flow(uint16_t port, uint32_t nb_queues, uint16_t *queues);
 
 struct rte_flow *create_gre_encap_flow(uint16_t port);
+
+int create_hairpin_meta_flow(void);
 #endif
