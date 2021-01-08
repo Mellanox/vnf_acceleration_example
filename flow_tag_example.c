@@ -71,6 +71,22 @@ static struct rte_flow_item pattern[] = {
 		.last = NULL },
 };
 
+/*
+ * create two flows by using tag to connect both.
+ * The corresponding testpmd commands:
+ * testpmd> set raw_decap 0 eth / ipv4 / udp / gtp / end_set
+ * testpmd> set raw_encap 0 eth src is 06:05:04:03:02:01
+ *          dst is 01:02:03:04:05:06 type is 0x0800 / end_set
+ * testpmd> flow create 0 group 0 ingress pattern eth / ipv4 / udp /
+ *          gtp teid is 1234 msg_type is 255 / ipv4 src is 11.10.10.10 /
+ *          tcp / end actions
+ *          set_tag data 0xdeadbeef index 0 mask 0xFFFFFFFF /
+ *          jump group 1 / end
+ * testpmd> flow create 0 group 1 ingress pattern tag data is 0xdeadbeef
+ *          index is 0 / end actions raw_decap index 0 /
+ *          raw_encap index 0 / queue index 0 / end 
+ */
+
 struct rte_flow *
 create_flow_with_tag(uint16_t port_id)
 {

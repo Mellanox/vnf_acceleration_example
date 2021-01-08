@@ -281,6 +281,25 @@ hairpin_two_ports_unbind(void)
 	return error;
 }
 
+/*
+ * create flows for two ports hairpin.
+ * The corresponding testpmd commands:
+ * start testpmd with one rxq, one txq, two ports, and hairpin-mode=0x12:
+ * > sudo build/app/dpdk-testpmd -n 4 -w 0000:af:00.0 -w 0000:af:00.1 -- \
+ *   -i --rxq=1 --txq=1 --flow-isolate-all --forward-mode=io \
+ *   --hairpinq=1 --hairpin-mode=0x12
+ * 
+ * testpmd> set raw_decap 0 eth / end_set
+ * testpmd> set raw_encap 0 eth src is 06:05:04:03:02:01
+ *          dst is 01:02:03:04:05:06 type is 0x0800 /
+ *          ipv4 src is 160.160.160.160 dst is 161.161.160.160 ttl is 20 /
+ *          udp dst is 2152 /
+ *          gtp teid is 0x1234 msg_type is 0xFF v_pt_rsv_flags is 0x30 / end_set
+ * testpmd> flow create 0 group 0 ingress pattern eth / ipv4 src is 10.10.10.10 /
+ *          tcp / end actions queue index 1 / end
+ * testpmd> flow create 1 group 0 egress pattern eth / ipv4 src is 10.10.10.10 /
+ *          tcp / end actions raw_decap index 0 / raw_encap index 0 / end
+ */
 struct rte_flow *
 hairpin_two_ports_flows_create(void)
 {
@@ -419,6 +438,24 @@ hairpin_two_ports_flows_create(void)
 	return flow;
 }
 
+/*
+ * create flows for one port hairpin.
+ * The corresponding testpmd commands:
+ * start testpmd with one rxq, one txq, one ports:
+ * > sudo build/app/dpdk-testpmd -n 4 -w 0000:af:00.0 -- \
+ *   -i --rxq=1 --txq=1 --flow-isolate-all --forward-mode=io \
+ *   --hairpinq=1
+ * 
+ * testpmd> set raw_decap 0 eth / end_set
+ * testpmd> set raw_encap 0 eth src is 06:05:04:03:02:01
+ *          dst is 01:02:03:04:05:06 type is 0x0800 /
+ *          ipv4 src is 160.160.160.160 dst is 161.161.160.160 ttl is 20 /
+ *          udp dst is 2152 /
+ *          gtp teid is 0x1234 msg_type is 0xFF v_pt_rsv_flags is 0x30 / end_set
+ * testpmd> flow create 0 group 0 ingress pattern eth / ipv4 src is 10.10.10.10 /
+ *          tcp / end actions raw_decap index 0 / raw_encap index 0 /
+ *          queue index 1 / end
+ */
 struct rte_flow *
 hairpin_one_port_flows_create(void)
 {

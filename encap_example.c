@@ -158,6 +158,18 @@ create_gtp_u_encap_flow(uint16_t port)
 	 * search for any header that matches eth /
 	 * ipv4 src addr is 10.10.10.10 dst addr is 11.11.11.11 /
 	 *  udp proto is 4000.
+	 * The corresponding testpmd commands:
+	 * testpmd> set raw_decap 0 eth / end_set
+	 * testpmd> set raw_encap 0 eth src is 06:05:04:03:02:01
+	 *          dst is 01:02:03:04:05:06 type is 0x0800 /
+	 *          ipv4 src is 12.12.12.12 dst is 13.13.13.13 /
+	 *          udp dst is 2152 /
+	 *          gtp teid is 1234 msg_type is 255 v_pt_rsv_flags is 2 /
+	 *          end_set
+	 * testpmd> flow create 0 egress group 0 pattern eth /
+	 *          ipv4 src is 10.10.10.10 dst is 11.11.11.11 /
+	 *          udp dst is 4000 / end actions
+	 *          raw_decap index 0 / raw_encap index 0 / end 
 	 */
 	pattern[L2].type = RTE_FLOW_ITEM_TYPE_ETH;
 	pattern[L3].type = RTE_FLOW_ITEM_TYPE_IPV4;
