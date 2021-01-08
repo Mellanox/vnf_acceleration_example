@@ -113,6 +113,19 @@ create_meter(uint16_t port_id, uint32_t mtr_id, uint32_t profile_id,
 	return rte_mtr_create(port_id, mtr_id, &params, shared, error);
 }
 
+/*
+ * create flow with meter.
+ * The corresponding testpmd commands:
+ * testpmd> add port meter profile srtcm_rfc2697 0 0 1048576 65536 0
+ * testpmd> create port meter 0 0 0 yes G Y D 0xFFFF 1 0
+ * testpmd> flow create 0 priority 1 group 0 ingress pattern eth / ipv4 / udp /
+ *          gtp msg_type is 255 / ipv4 src is 13.10.10.10 / tcp / end
+ *          actions set_tag data 0xD0A0 index 1 mask 0xFFFFFFFF /
+ *          jump group 1 / end
+ * testpmd> flow create 0 group 1 priority 1 ingress pattern tag data is 0xD0A0
+ *          index is 1 / end actions mark id 0xD0A0 / meter mtr_id 0 /
+ *          queue index 0 / end
+ */
 int
 create_flow_with_meter(uint16_t port_id)
 {

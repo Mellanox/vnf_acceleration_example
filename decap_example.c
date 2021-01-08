@@ -175,6 +175,18 @@ create_gtp_u_decap_rss_flow(uint16_t port, uint32_t nb_queues,
 	 * The RSS will only be done on the inner ipv4 src file, in order to 
 	 * make sure that all of the packets from a given user (inner source
 	 * ip) will be routed to the same core.
+	 * 
+	 * The corresponding testpmd commands:
+	 * testpmd> set raw_decap 0 eth / ipv4 / udp / gtp / end_set
+	 * testpmd> set raw_encap 0 eth dst is 01:02:03:04:05:06
+	 *          src is 06:05:04:03:02:01 type is 0x0800 / end_set
+	 * testpmd> flow create 0 ingress group 0 pattern eth / ipv4 / udp /
+	 *          gtp teid is 1234 msg_type is 255
+	 *          v_pt_rsv_flags spec 0x2 v_pt_rsv_flags mask 0x7 /
+	 *          ipv4 src is 10.10.10.10 / udp dst is 4000 / end actions
+	 *          raw_decap index 0 / raw_encap index 0 /
+	 *          set_ipv4_src ipv4_addr 14.14.14.14 /
+	 *          rss types ip l3-src-only end / end
 	 */
 	pattern[L2].type = RTE_FLOW_ITEM_TYPE_ETH;
 	pattern[L3].type = RTE_FLOW_ITEM_TYPE_IPV4;

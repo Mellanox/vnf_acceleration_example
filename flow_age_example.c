@@ -154,6 +154,21 @@ register_aged_event(uint16_t port_id)
 			aged_event_callback, NULL);
 }
 
+/*
+ * create three flows with different age time.
+ * The corresponding testpmd commands:
+ * testpmd> flow create 0 group 0 ingress pattern eth / ipv4 src is 3.3.2.1 / udp /
+ *          gtp teid is 1234 msg_type is 255 / end actions jump group 1 / end
+ * testpmd> flow create 0 group 1 ingress pattern eth / ipv4 src is 3.3.2.1 / udp /
+ *          gtp teid is 1234 msg_type is 255 / ipv4 src is 2.0.0.1 / tcp / end
+ *          actions age  timeout 10 / mark id 0x0201 / queue index 0 / end
+ * testpmd> flow create 0 group 1 ingress pattern eth / ipv4 src is 3.3.2.1 / udp /
+ *          gtp teid is 1234 msg_type is 255 / ipv4 src is 2.0.0.2 / tcp / end
+ *          actions age  timeout 20 / mark id 0x0202 / queue index 0 / end
+ * testpmd> flow create 0 group 1 ingress pattern eth / ipv4 src is 3.3.2.1 / udp /
+ *          gtp teid is 1234 msg_type is 255 / ipv4 src is 2.0.0.3 / tcp / end
+ *          actions age  timeout 30 / mark id 0x0203 / queue index 0 / end
+ */
 int
 create_flow_with_age(uint16_t port_id)
 {

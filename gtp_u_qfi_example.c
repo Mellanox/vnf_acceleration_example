@@ -77,7 +77,19 @@ static struct rte_flow_item pattern[] = {
 		.last = NULL },
 };
 
-/* Match on GTP-U QFI traffic. */
+/*
+ * Match on GTP-U QFI traffic.
+ * The corresponding testpmd commands:
+ * testpmd> flow create 0 ingress group 0 pattern eth / ipv4 src is 3.3.1.1 /
+ *          udp / gtp teid is 1234 msg_type is 255
+ *          v_pt_rsv_flags spec 0x4 v_pt_rsv_flags mask 0x7 / end
+ *          actions jump group 1 / end
+ * testpmd> flow create 0 ingress group 1 pattern eth / ipv4 src is 3.3.1.1 /
+ *          udp / gtp teid is 1234 msg_type is 255
+ *          v_pt_rsv_flags spec 0x4 v_pt_rsv_flags mask 0x7 /
+ *          gtp_psc qfi spec 9 qfi mask 0x3f pdu_t is 0x10 / end actions
+ *          mark id 0x0303 / queue index 0 / end
+ */
 int
 create_gtp_u_qfi_flow(uint16_t port_id)
 {

@@ -71,6 +71,21 @@ static struct rte_flow_item pattern[] = {
 		.last = NULL },
 };
 
+/* create two flows by using symmetric rss key.
+ * The corresponding testpmd commands:
+ * testpmd> flow create 0 group 0 ingress pattern eth / ipv4 / udp /
+ *          gtp msg_type is 255 / ipv4 src is 2.0.0.1 / tcp / end
+ *          actions mark id 0x2001 /
+ *          rss level 2
+ *          key 6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a
+ *          key_len 40 types ip l3-src-only end / end
+ * testpmd> flow create 0 group 0 ingress pattern eth / ipv4 dst is 2.0.0.1 /
+ *          tcp / end actions mark id 0x2001 /
+ *          rss level 1
+ *          key 6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a6d5a
+ *          key_len 40 types ip l3-dst-only end / end
+ */
+
 int
 create_symmetric_rss_flow(uint16_t port_id, uint32_t nb_queues,
 		uint16_t *queues)
