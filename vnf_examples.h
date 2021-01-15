@@ -78,4 +78,9 @@ create_nic_flow_with_mirror(uint16_t port_id, uint16_t mirror2queue,
 struct rte_flow *
 create_gtp_u_inner_ip_shared_rss_flow(uint16_t port, uint32_t nb_queues,
 			       uint16_t *queues);
+int
+create_flow_with_counter(uint16_t port);
+
+int
+query_counters(uint16_t port);
 #endif

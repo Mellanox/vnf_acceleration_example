@@ -411,9 +411,21 @@ main(int argc, char **argv)
 		rte_exit(EXIT_FAILURE, "error in creating flow");
 	}
 	printf("done\n");
+	printf(":: create flows with counter ..");
+	if (create_flow_with_counter(port_id)) {
+		printf("Flows with counter cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
 	ret = sync_all_flows(port_id);
 	if (ret) {
 		printf("Failed to sync flows, flows may not take effect!\n");
+		rte_exit(EXIT_FAILURE, "error to sync flows");
+	}
+
+	printf(":: query counters ...\n");
+	if (query_counters(port_id)) {
+		printf("Failed to query counters\n");
 		rte_exit(EXIT_FAILURE, "error to sync flows");
 	}
 
