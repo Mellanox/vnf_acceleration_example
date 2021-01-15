@@ -403,6 +403,14 @@ main(int argc, char **argv)
 		}
 		printf("done\n");
 	}
+	printf(":: create GTP-U shared inner RSS flow ..");
+	flow = create_gtp_u_inner_ip_shared_rss_flow(port_id, nr_std_queues,
+			queues);
+	if (!flow) {
+		printf("GTP-U shared inner RSS flow cannot be created\n");
+		rte_exit(EXIT_FAILURE, "error in creating flow");
+	}
+	printf("done\n");
 	ret = sync_all_flows(port_id);
 	if (ret) {
 		printf("Failed to sync flows, flows may not take effect!\n");

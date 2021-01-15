@@ -74,4 +74,8 @@ int create_hairpin_meta_flow(void);
 struct rte_flow *
 create_nic_flow_with_mirror(uint16_t port_id, uint16_t mirror2queue,
 		uint16_t fwd2queue);
+
+struct rte_flow *
+create_gtp_u_inner_ip_shared_rss_flow(uint16_t port, uint32_t nb_queues,
+			       uint16_t *queues);
 #endif

@@ -128,4 +128,87 @@ create_gtp_u_inner_ip_rss_flow(uint16_t port, uint32_t nb_queues,
 
 }
 
+struct rte_flow *
+create_gtp_u_inner_ip_shared_rss_flow(uint16_t port, uint32_t nb_queues,
+				      uint16_t *queues)
+{
+	struct rte_flow *flow;
+	struct rte_flow_error error;
+	struct rte_flow_attr attr = { /* Holds the flow attributes. */
+				.group = 0, /* set the rule on the main group. */
+				.ingress = 1,/* Rx flow. */
+				.priority = 1, }; /* add priority to rule
+				to give the Decap rule higher priority since
+				it is more specific */
+	struct rte_flow_item_gtp gtp_spec = {
+			.msg_type = 255 }; /* The expected value. */
+	struct rte_flow_item_gtp gtp_mask = {
+			.msg_type = 0xff }; /* match only message type.
+			mask bit equal to 1 means match on this bit. */
+	struct rte_flow_action_rss rss = {
+			.level = 2, /* RSS should be done on inner header. */
+			.queue = queues, /* Set the selected target queues. */
+			.queue_num = nb_queues, /* The number of queues. */
+			.types =  ETH_RSS_IP };
+	struct rte_flow_action shared_actions[] = {
+			[0] = { /* The RSS action to be used. */
+				.type = RTE_FLOW_ACTION_TYPE_RSS,
+				.conf = &rss },
+			[1] = { /* End action mast be the last action. */
+				.type = RTE_FLOW_ACTION_TYPE_END,
+				.conf = NULL }
+			};
+	struct rte_flow_shared_action *shared_rss;
+	struct rte_flow_shared_action_conf shared_action_conf = {
+		.ingress = 1,
+		.egress = 0,
+		.transfer = 0,
+	};
+	/* create shared RSS action. */
+	shared_rss = rte_flow_shared_action_create(port, &shared_action_conf,
+			shared_actions, &error);
+	if (shared_rss == NULL) {
+		printf("can't create shared RSS action.\n");
+		return NULL;
+	}
+	/* Configure matching on outer ipv4 and GTP-U.
+	 * This case we don't care about specific outer ipv4 or UDP we just 
+	 * seach for any header that maches eth / ipv4 / udp / gtp type 255 / 
+	 * ipv4 / tcp.
+	 * The RSS will only be done on the inner ipv4 src file, in order to 
+	 * make sure that all of the packets from a given user (inner source
+	 * ip) will be routed to the same core.
+	 *
+	 * The corresponding testpmd commands:
+	 * testpmd> flow shared_action 0 create action_id 100
+	 *          action rss level 2 types ip end / end
+	 * testpmd> flow create 0 ingress pattern eth / ipv4 / udp /
+	 *          gtp msg_type is 255 / ipv4 / tcp / end
+	 *          actions shared 100 / end
+	 */
+	pattern[L2].type = RTE_FLOW_ITEM_TYPE_ETH;
+	pattern[L3].type = RTE_FLOW_ITEM_TYPE_IPV4;
+	pattern[L4].type = RTE_FLOW_ITEM_TYPE_UDP;
+	pattern[TUNNEL].type = RTE_FLOW_ITEM_TYPE_GTP;
+	pattern[TUNNEL].spec = &gtp_spec;
+	pattern[TUNNEL].mask = &gtp_mask;
+	pattern[L3_INNER].type = RTE_FLOW_ITEM_TYPE_IPV4;
+	pattern[L4_INNER].type = RTE_FLOW_ITEM_TYPE_TCP;
 
+	struct rte_flow_action actions[] = {
+			[0] = { /* The shared RSS action to be used. */
+				.type = RTE_FLOW_ACTION_TYPE_SHARED,
+				.conf = shared_rss },
+			[1] = { /* End action mast be the last action. */
+				.type = RTE_FLOW_ACTION_TYPE_END,
+				.conf = NULL }
+		};
+
+	/* Create the flow. */
+	flow = rte_flow_create(port, &attr, pattern, actions, &error);
+	if (!flow)
+		printf("Can't create the RSS flow on inner ip. %s\n",
+		       error.message);
+	
+	return flow;
+}
