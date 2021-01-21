@@ -142,11 +142,15 @@ meson build-meson
 cd build-meson  
 ninja 
 
+Install DPDK system-wide:
+ninja install
+ldconfig
+
 Clone the VNF example repository:  
 https://github.com/Mellanox/vnf_acceleration_example  
 git clone git@github.com:Mellanox/vnf_acceleration_example.git
 
-Set the environment variables:  
+Set the environment variables (mandatory for DPDK version before 20.11): 
 export RTE_SDK=/path/to/dpdk/folder  
 export RTE_TARGET=export_target(for example: x86_64-native-linuxapp-gcc)
 
