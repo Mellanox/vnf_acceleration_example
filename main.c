@@ -321,6 +321,7 @@ main(int argc, char **argv)
 	flow = create_gtp_u_inner_ip_rss_flow(port_id, nr_std_queues,
 				    queues);
 	flow = create_gtp_u_encap_flow(port_id);
+	flow = create_gtp_u_psc_encap_flow(port_id);
 	if (!flow) {
 		printf("Flow can't be created \n");
 		rte_exit(EXIT_FAILURE, "error in creating flow");
