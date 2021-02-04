@@ -155,7 +155,7 @@ create_gtp_u_qfi_flow(uint16_t port_id)
 		},
 	};
 	struct rte_flow_item_gtp_psc gtp_psc_spec = {
-			.pdu_type = 0x10, /* UL PDU Session Information. */
+			.pdu_type = 0x01, /* UL PDU Session Information. */
 			.qfi = 9};
 	struct rte_flow_item_gtp_psc gtp_psc_mask = {
 			.pdu_type = 0xFF,

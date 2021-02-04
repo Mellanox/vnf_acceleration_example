@@ -17,6 +17,9 @@ create_gtp_u_inner_ip_rss_flow(uint16_t port, uint32_t nb_queues,
 struct rte_flow *
 create_gtp_u_encap_flow(uint16_t port);
 
+struct rte_flow *
+create_gtp_u_psc_encap_flow(uint16_t port);
+
 int
 sync_nic_tx_flows(uint16_t port);
 
