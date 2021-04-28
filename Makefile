@@ -8,7 +8,8 @@ SRCS-y := main.c rss_example.c decap_example.c encap_example.c \
 	sync_flow_example.c hairpin_example.c flow_tag_example.c \
 	sampling_mirror_example.c symmetric_rss_example.c \
 	meter_example.c gtp_u_qfi_example.c flow_age_example.c \
-	flow_meta_example.c counter_example.c
+	flow_meta_example.c counter_example.c \
+	gtp_teid_modify_example.c
 
 # Build using pkg-config variables if possible
 ifeq ($(shell pkg-config --exists libdpdk && echo 0),0)
