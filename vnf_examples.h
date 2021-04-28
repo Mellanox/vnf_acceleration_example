@@ -86,4 +86,7 @@ create_flow_with_counter(uint16_t port);
 
 int
 query_counters(uint16_t port);
+
+int
+create_modify_gtp_teid_flows(uint16_t port_id);
 #endif

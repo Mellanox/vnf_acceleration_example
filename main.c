@@ -429,6 +429,13 @@ main(int argc, char **argv)
 		printf("Failed to query counters\n");
 		rte_exit(EXIT_FAILURE, "error to sync flows");
 	}
+	printf(":: create modify GTP-U TEID flows ..");
+	ret = create_modify_gtp_teid_flows(port_id);
+	if (ret) {
+		printf("Failed to create modify GTP-U TEID flows\n");
+		rte_exit(EXIT_FAILURE, "error in create flow");
+	}
+	printf("done\n");
 
 	main_loop();
 
