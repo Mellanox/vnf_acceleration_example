@@ -133,6 +133,9 @@ Clone the Mellanox DPDK from:
 https://github.com/Mellanox/dpdk.org  
 git clone git@github.com:Mellanox/dpdk.org.git
 
+or download upstream DPDK 21.02:
+wget https://fast.dpdk.org/rel/dpdk-21.02.tar.xz
+
 Make sure you have all the MLX5 DPDK Prerequisites:  
 https://doc.dpdk.org/guides/nics/mlx5.html#prerequisites
 
@@ -145,6 +148,16 @@ ninja
 Install DPDK system-wide:
 ninja install
 ldconfig
+
+(optional) Set library environment:
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:<dpdk_install_dir>/pkgconfig
+echo "<dpdk_install_dir>" > /etc/ld.so.conf.d/dpdk-x86_64.conf
+
+_note_:
+The <dpdk_install_dir> could be different on different OS distribution.
+For example, On Ubuntu 20.04 it is:
+
+/usr/local/lib/x86_64-linux-gnu
 
 Clone the VNF example repository:  
 https://github.com/Mellanox/vnf_acceleration_example  
